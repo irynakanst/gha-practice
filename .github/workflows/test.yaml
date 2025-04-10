@@ -1,0 +1,28 @@
+name: Test
+on:
+  workflow_dispatch:
+
+jobs:
+  test-and-build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkou@v3
+      - name: Setup Node Env
+        uses: actions/setup-node@v3
+        with:
+          node-version: 18
+          cache: "npm"
+      - name: Install Dependencies
+        uses: npm ci
+      - name: Check for Type Errors
+        uses: npm run typecheck
+      - name: Build project
+        uses: npm run build
+      - uses: actions/upload-artifact@v3
+        with:
+          name: build
+          path: .next/
+      - name: Run Unit Test
+        run: npm run test
+
