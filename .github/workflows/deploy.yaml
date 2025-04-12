@@ -16,11 +16,14 @@ jobs:
     runs-on: ubuntu-latest
     environment: ${{ inputs.github-env}}
     steps:
+      - name: Print debug info
+        run: |
+          echo "aws-env = ${{ inputs.aws-env }}"
+          echo "github-env = ${{ inputs.github-env }}"
+          echo "expected prod env = ${{ vars.AWS_EB_PRODUCTION_ENV }}"
       - name: Avoid deploying to Prod using nonProd Env
         if: inputs.aws-env == vars.AWS_EB_PRODUCTION_ENV && inputs.github-env != 'production'
-        run: |
-          echo "::error::Cannot deploy to production using a non prodcuction environment"
-          exit 1
+        run: exit 1
       - name: Checkout
         uses: actions/checkout@v4
       - name: Configure AWS Credentials
