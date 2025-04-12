@@ -42,7 +42,7 @@ jobs:
         id: install-eb-cli
         run:  pip install awsebcli 
       - name: Initialize EB
-        run: eb init ${{ vars.AWS_EB_APP_NAME }} --platform ${{ vars.AWS_EB_PLATFORM }} --region ${{ vars.AWS_REGION }}
+        run: eb init ${{ vars.AWS_EB_APP_NAME }} --platform "${{ vars.AWS_EB_PLATFORM }}" --region ${{ vars.AWS_REGION }}
       - name: Create new Env
         run: eb create ${{ inputs.aws-env }} --instance-types ${{ vars.AWS_EB_ENV_INSTANCE_TYPES }} --cname ${{ inputs.aws-env }}
       - name: Abort if Cancelled
