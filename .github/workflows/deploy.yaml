@@ -1,0 +1,54 @@
+name: deploy
+on:
+  workflow_dispatch:
+    inputs:
+      aws-env:
+        required: true
+        type: string
+        default: "gha-practice-staging"
+      github-env:
+        required: true
+        type: string
+        default: "staging"
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment: ${{ inputs.github-env}}
+    steps:
+      - name: Avoid deploying to Prod using nonProd Env
+        if: inputs.aws-env == vars.AWS_EB_PRODUCTION_ENV && inputs.github-env != 'production'
+        run: |
+          echo "::error::Cannot deploy to production using a non prodcuction environment"
+          exit 1
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v2
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ vars.AWS_REGION }}
+      - name: Setup Node Env
+        uses: actions/setup-node@v3
+        with:
+          node-version: 18
+          cache: "npm"
+      - name: Install Dependencies
+        run: npm ci
+      - name: Build App
+        run: npm run build
+      - name: Install EB CLI
+        id: install-eb-cli
+        run:  pip install awsebcli 
+      - name: Initialize EB
+        run: eb init ${{ vars.AWS_EB_APP_NAME }} --platform ${{ vars.AWS_EB_PLATFORM }} --region ${{ vars.AWS_REGION }}
+      - name: Create new Env
+        run: eb create ${{ inputs.aws-env }} --instance-types ${{ vars.AWS_EB_ENV_INSTANCE_TYPES }} --cname ${{ inputs.aws-env }}
+      - name: Abort if Cancelled
+        if: cancelled() && steps.install-eb-cli.conclusion == 'success'
+        run: eb abort ${{ inputs.aws-env }}
+
+
+
+
